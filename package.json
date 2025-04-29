@@ -1,0 +1,25 @@
+{
+  "name": "stockpredictor",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jasonkwok475/StockPredictor.git"
+  },
+  "author": "Jason Kwok",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jasonkwok475/StockPredictor/issues"
+  },
+  "homepage": "https://github.com/jasonkwok475/StockPredictor#readme",
+  "dependencies": {
+    "@tensorflow/tfjs": "^4.22.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "fs": "^0.0.1-security"
+  }
+}
