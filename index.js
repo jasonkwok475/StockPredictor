@@ -24,10 +24,16 @@ app.post('/api/data', (req, res) => {
   res.status(200).json({ message: 'Data received successfully', data });
 });
 
+// app.post('/train_data', (req, res) => {
+//   const data = req.body;
+// })
+
 const main = async () => {
   try {
-    app.listen(port, () => {
+    app.listen(port, async () => {
       console.log(`Server is running at http://localhost:${port}`);
+      let sample = stockPredictor.getSampleData();
+      let result = await stockPredictor.trainModel(sample);
     });
   } catch (error) {
     console.error('Error starting server:', error);
