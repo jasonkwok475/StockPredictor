@@ -98,3 +98,5 @@ class StockPredictor extends EventEmitter {
 }
 
 module.exports = StockPredictor;
+
+//https://www.anychart.com/blog/2023/05/02/candlestick-chart-stock-analysis/

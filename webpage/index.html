@@ -6,6 +6,15 @@
   <title>Stock Predictor</title>
   <link href="./index.css" rel="stylesheet" type="text/css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://cdn.anychart.com/releases/8.11.0/css/anychart-ui.min.css" rel="stylesheet" type="text/css">
+  <link href="https://cdn.anychart.com/releases/8.11.0/fonts/css/anychart-font.min.css" rel="stylesheet" type="text/css">
+  <script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-core.min.js"></script>
+  <script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-stock.min.js"></script>
+  <script src="https://cdn.anychart.com/releases/8.11.0/themes/dark_glamour.min.js"></script>
+  <script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-ui.min.js"></script>
+  <script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-data-adapter.min.js"></script>
+  <script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-annotations.min.js
+"></script>
 </head>
 <body>
   <div id="sidebar">
@@ -16,9 +25,7 @@
       <button type="button" onclick="loadChart()">Load Chart</button>
     </form>
   </div>
-  <div id="chart-container">
-    <canvas id="stockChart"></canvas>
-  </div>
+  <div id="stockChart"></div>
   <script src="./index.js"></script>
 </body>
 </html>
