@@ -1,4 +1,5 @@
 const fs = require("fs");
+const tf = require("@tensorflow/tfjs");
 
 const DATA_FOLDER = "./data/";
 const MODEL_FOLDER = "./model/";
@@ -39,7 +40,7 @@ class DataManager {
     let filedata = fs.readFileSync(path, { encoding: 'utf8', flag: 'r' });
     let data = filedata.split("\n").map((row) => {
       let x = row.split(',');
-      if (x[2] == undefined) return;
+      if (x.includes(undefined) || x.includes('')) return;
       return {
         date: new Date(x[2].substring(0,4), x[2].substring(4,6), x[2].substring(6,8), x[3].substring(0,2)),
         open: parseFloat(x[4]),
@@ -49,7 +50,8 @@ class DataManager {
         vol: parseFloat(x[8])
       }
     });
-    return data.filter(item => item).shift(); // Removes undefined elements
+    data.shift(); //Remove the headings
+    return data.filter(item => item); // Removes undefined elements
   }
 
 
@@ -75,8 +77,7 @@ class DataManager {
       }
       training_labels.push(data[i + this.considered_intervals].close);
     }
-
-    return {training_data, training_labels};
+    return {data: tf.tensor(training_data), labels: tf.tensor(training_labels)};
   }
 }
 

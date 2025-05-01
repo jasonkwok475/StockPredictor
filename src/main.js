@@ -22,10 +22,10 @@ class StockPredictor extends EventEmitter {
     super();
     this.stockData = [];
     this.dataManager = new DataManager();
+    this.sample_data = this.getSampleData();
 
-    let normalizer = tf.layers.layerNormalization({ inputShape: [1,15], axis: -1 });
-    //normalizer.adapt(sample_data.training_data);
-    this.model = this.buildModel(normalizer);
+    this.model = this.buildModel();
+    this.model.summary();
   }
 
   addStockData(data) {
@@ -37,10 +37,12 @@ class StockPredictor extends EventEmitter {
     return this.stockData;
   }
 
-  buildModel(normalizer) {
+  buildModel() {
     let model = tf.sequential({ layers: [
-      normalizer,
+      tf.layers.layerNormalization({ inputShape: [15, ], axis: -1 }),
       tf.layers.dropout({ rate: 0.2 }), //Helps to prevent overfitting
+      tf.layers.dense({ units: 64, activation: "relu" }),
+      tf.layers.dropout({ rate: 0.1 }),
       tf.layers.dense({ units: 64, activation: "relu" }),
       tf.layers.dropout({ rate: 0.1 }),
       tf.layers.dense({ units: 1 })
@@ -48,7 +50,7 @@ class StockPredictor extends EventEmitter {
 
     model.compile({
       loss: "meanSquaredError",
-      optimizer: 'sgd',
+      optimizer: 'adam',
       metrics: ['MAE']
     });
 
@@ -62,16 +64,27 @@ class StockPredictor extends EventEmitter {
   async trainModel(data) {
     return new Promise((resolve, reject) => {
       try {
-        let history = this.model.fit(
-          data.training_data,
-          data.training_labels,
+        this.model.fit(
+          data.data,
+          data.labels,
           {
-            epochs: 1,
+            epochs: 15,
             verbose: 0, // Suppress Logging
             validation_split: 0.2 //Validation results on 20% of data
           }
-        )
-        resolve(history);
+        ).then((history) => resolve(history));
+      } catch (e) {
+        console.log(e);
+        reject();
+      }
+    });
+  }
+
+  async predict(data) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let r = await this.model.predict(data.data, data.labels, {verbose:0});
+        return resolve(r);
       } catch (e) {
         console.log(e);
         reject();

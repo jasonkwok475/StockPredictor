@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const tf = require("@tensorflow/tfjs");
 
 const app = express();
 const port = 3000;
@@ -32,8 +33,10 @@ const main = async () => {
   try {
     app.listen(port, async () => {
       console.log(`Server is running at http://localhost:${port}`);
-      let sample = stockPredictor.getSampleData();
-      let result = await stockPredictor.trainModel(sample);
+      let result = await stockPredictor.trainModel(stockPredictor.sample_data);
+      console.log(result);
+      let r = await stockPredictor.predict(stockPredictor.sample_data);
+      console.log(r);
     });
   } catch (error) {
     console.error('Error starting server:', error);

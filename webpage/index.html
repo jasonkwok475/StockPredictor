@@ -4,32 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Stock Predictor</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      height: 100vh;
-    }
-    #sidebar {
-      width: 20%;
-      background-color: #f4f4f4;
-      padding: 20px;
-      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-    }
-    #chart-container {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background-color: #fff;
-    }
-    canvas {
-      max-width: 100%;
-      max-height: 100%;
-    }
-  </style>
+  <link href="./index.css" rel="stylesheet" type="text/css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -44,46 +19,6 @@
   <div id="chart-container">
     <canvas id="stockChart"></canvas>
   </div>
-
-  <script>
-    function loadChart() {
-      const stockSymbol = document.getElementById('stockSymbol').value;
-      if (!stockSymbol) {
-        alert('Please enter a stock symbol.');
-        return;
-      }
-
-      // Example data for demonstration
-      const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-      const data = [150, 160, 170, 165, 180, 190];
-
-      const ctx = document.getElementById('stockChart').getContext('2d');
-      new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: `${stockSymbol} Stock Price`,
-            data: data,
-            borderColor: 'rgba(75, 192, 192, 1)',
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            borderWidth: 2
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            x: {
-              beginAtZero: true
-            },
-            y: {
-              beginAtZero: true
-            }
-          }
-        }
-      });
-    }
-  </script>
+  <script src="./index.js"></script>
 </body>
 </html>
