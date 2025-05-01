@@ -1,10 +1,12 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const tf = require("@tensorflow/tfjs");
+const fs = require('fs');
 
 const app = express();
 const port = 3000;
+
+const MODEL_FOLDER = './model'; //! Put these into a config file?
 
 const StockPredictor = require('./src/main.js');
 const stockPredictor = new StockPredictor();
@@ -25,9 +27,20 @@ app.post('/api/data', (req, res) => {
   res.status(200).json({ message: 'Data received successfully', data });
 });
 
-// app.post('/train_data', (req, res) => {
-//   const data = req.body;
-// })
+app.get('/api/models', (req, res) => {
+  fs.readdir(MODEL_FOLDER, (err, files) => {
+    if (err) return console.log(err);
+    res.send(files);
+  });
+});
+
+app.post('/api/select_model', (req, res) => {
+  const model_file = req.body.model;
+});
+
+app.post('/api/predict', (req, res) => {
+  const data = req.data;
+});
 
 const main = async () => {
   try {

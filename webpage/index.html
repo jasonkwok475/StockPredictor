@@ -13,13 +13,17 @@
   <script src="https://cdn.anychart.com/releases/8.11.0/themes/dark_glamour.min.js"></script>
   <script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-ui.min.js"></script>
   <script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-data-adapter.min.js"></script>
-  <script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-annotations.min.js
-"></script>
+  <script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-annotations.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 </head>
 <body>
   <div id="sidebar">
     <h2>Stock Options</h2>
     <form id="stockForm">
+      <label for="models">Select a prediction model:</label><br>
+      <select id="models" name="models" onchange="selectModel()">
+        <option value="None" selected="selected">None</option>
+      </select><br><br>
       <label for="stockSymbol">Stock Symbol:</label><br>
       <input type="text" id="stockSymbol" name="stockSymbol" placeholder="e.g., AAPL"><br><br>
       <button type="button" onclick="loadChart()">Load Chart</button>

@@ -68,7 +68,7 @@ class StockPredictor extends EventEmitter {
           data.data,
           data.labels,
           {
-            epochs: 15,
+            epochs: 1,
             verbose: 0, // Suppress Logging
             validation_split: 0.2 //Validation results on 20% of data
           }
