@@ -11,6 +11,9 @@ const MODEL_FOLDER = './model'; //! Put these into a config file?
 const StockPredictor = require('./src/main.js');
 const stockPredictor = new StockPredictor();
 
+const ApiManager = require('./src/apiManager.js');
+const apiManager = new ApiManager();
+
 app.use(cors({
   origin: 'http://localhost:3000',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -50,6 +53,7 @@ const main = async () => {
       console.log(result);
       let r = await stockPredictor.predict(stockPredictor.sample_data);
       console.log(r);
+      let t = await apiManager.getTrainingData('VOO');
     });
   } catch (error) {
     console.error('Error starting server:', error);
@@ -57,3 +61,6 @@ const main = async () => {
 }
 
 main().catch((error) => console.error('Error in main function:', error));
+
+//https://medium.com/coinmonks/free-stock-apis-de8f13619911
+//https://documentation.tradier.com/brokerage-api?_gl=1*eyez7q*_gcl_au*MTc5MTQ5NjU3MC4xNzQ2MjI1NzUx*_ga*MjEyNzQ5MjgwMi4xNzQ2MjI1NzUx*_ga_3PK48K3W99*MTc0NjIyNTc1MS4xLjEuMTc0NjIyNTc4NS4yNi4wLjA.

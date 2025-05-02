@@ -1,4 +1,4 @@
-var default_stock = "AAPL";
+var default_stock = "SPX";
 var models;
 
 $(document).ready(async function () {

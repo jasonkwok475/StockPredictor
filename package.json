@@ -19,7 +19,9 @@
   "dependencies": {
     "@tensorflow/tfjs": "^4.22.0",
     "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
     "express": "^5.1.0",
-    "fs": "^0.0.1-security"
+    "fs": "^0.0.1-security",
+    "request": "^2.88.2"
   }
 }

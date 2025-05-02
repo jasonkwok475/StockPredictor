@@ -44,7 +44,6 @@ class StockPredictor extends EventEmitter {
       tf.layers.dense({ units: 64, activation: "relu" }),
       tf.layers.dropout({ rate: 0.1 }),
       tf.layers.dense({ units: 64, activation: "relu" }),
-      tf.layers.dropout({ rate: 0.1 }),
       tf.layers.dense({ units: 1 })
     ]});
 
