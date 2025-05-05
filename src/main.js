@@ -3,7 +3,7 @@ const fs = require("fs");
 const tf = require("@tensorflow/tfjs");
 const DataManager = require('./dataManager.js');
 
-const SAMPLE_DATA = './data/aaxj.us.txt';
+const SAMPLE_DATA = './data/voo.json';
 
 /**
  * @typedef {Object} InputObject
@@ -22,7 +22,7 @@ class StockPredictor extends EventEmitter {
     super();
     this.stockData = [];
     this.dataManager = new DataManager();
-    this.sample_data = this.getSampleData();
+    this.sample_data = null;
 
     this.model = this.buildModel();
     this.model.summary();
@@ -39,7 +39,7 @@ class StockPredictor extends EventEmitter {
 
   buildModel() {
     let model = tf.sequential({ layers: [
-      tf.layers.layerNormalization({ inputShape: [15, ], axis: -1 }),
+      tf.layers.layerNormalization({ inputShape: [21, ], axis: -1 }),
       tf.layers.dropout({ rate: 0.2 }), //Helps to prevent overfitting
       tf.layers.dense({ units: 64, activation: "relu" }),
       tf.layers.dropout({ rate: 0.1 }),
@@ -91,8 +91,10 @@ class StockPredictor extends EventEmitter {
     });
   }
 
-  getSampleData() {
-    return this.dataManager.compileTrainingData(SAMPLE_DATA);
+  async getSampleData() {
+    if (this.sample_data) return this.sample_data;
+    this.sample_data = await this.dataManager.compileTrainingData(SAMPLE_DATA);
+    return this.sample_data
   }
 }
 

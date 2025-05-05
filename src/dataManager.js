@@ -37,21 +37,28 @@ class DataManager {
    * @returns {ExtractedData[]}
    */
   extractData(path) {
-    let filedata = fs.readFileSync(path, { encoding: 'utf8', flag: 'r' });
-    let data = filedata.split("\n").map((row) => {
-      let x = row.split(',');
-      if (x.includes(undefined) || x.includes('')) return;
-      return {
-        date: new Date(x[2].substring(0,4), x[2].substring(4,6), x[2].substring(6,8), x[3].substring(0,2)),
-        open: parseFloat(x[4]),
-        high: parseFloat(x[5]),
-        low: parseFloat(x[6]),
-        close: parseFloat(x[7]),
-        vol: parseFloat(x[8])
-      }
+    return new Promise((resolve, reject) => {
+      fs.readFile(path, (err, data) => {
+        if (err) return reject(err); //! Change later
+        let filedata = JSON.parse(data);
+        let format = filedata.format;
+  
+        let result = filedata.data.map((row) => {
+          if (row.includes(undefined) || row.includes('')) return;
+          return {
+            date: new Date(row[format.findIndex(x => x == "time")]),
+            open: parseFloat(row[format.findIndex(x => x == "open")]),
+            high: parseFloat(row[format.findIndex(x => x == "high")]),
+            low: parseFloat(row[format.findIndex(x => x == "low")]),
+            close: parseFloat(row[format.findIndex(x => x == "close")]),
+            vol: parseFloat(row[format.findIndex(x => x == "volume")]),
+            rsi: parseFloat(row[format.findIndex(x => x == "rsi")]),
+            sma: parseFloat(row[format.findIndex(x => x == "sma")])
+          }
+        });
+        return resolve(result.filter(item => item)); // Removes undefined elements
+      });
     });
-    data.shift(); //Remove the headings
-    return data.filter(item => item); // Removes undefined elements
   }
 
 
@@ -59,8 +66,8 @@ class DataManager {
    * 
    * @param {string} path 
    */
-  compileTrainingData(path) {
-    let data = this.extractData(path);
+  async compileTrainingData(path) {
+    let data = await this.extractData(path);
     let training_data = [];
     let training_labels = [];
 
@@ -72,7 +79,9 @@ class DataManager {
           data[i + j].high,
           data[i + j].low,
           data[i + j].close,
-          data[i + j].vol
+          data[i + j].vol,
+          data[i + j].rsi,
+          data[i + j].sma
         )
       }
       training_labels.push(data[i + this.considered_intervals].close);

@@ -24,10 +24,10 @@ app.use(express.json());
 
 app.use(express.static(path.join(__dirname, 'webpage')));
 
-app.post('/api/data', (req, res) => {
+app.post('/api/data', async (req, res) => {
   const data = req.body;
-  console.log('Received data:', data);
-  res.status(200).json({ message: 'Data received successfully', data });
+  let response = await apiManager.getTrainingData(data.stock, '2022-01-01');
+  res.status(200).json(response);
 });
 
 app.get('/api/models', (req, res) => {
@@ -49,11 +49,10 @@ const main = async () => {
   try {
     app.listen(port, async () => {
       console.log(`Server is running at http://localhost:${port}`);
-      let result = await stockPredictor.trainModel(stockPredictor.sample_data);
+      let result = await stockPredictor.trainModel(await stockPredictor.getSampleData());
       console.log(result);
-      let r = await stockPredictor.predict(stockPredictor.sample_data);
+      let r = await stockPredictor.predict(await stockPredictor.getSampleData());
       console.log(r);
-      let t = await apiManager.getTrainingData('VOO');
     });
   } catch (error) {
     console.error('Error starting server:', error);
