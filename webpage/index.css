@@ -1,0 +1,54 @@
+:root {
+  --background-color: #37474F;
+  --main-text-color: #ECEFF1;
+  --button-color: #90A4AE;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  height: 100vh;
+  color: var(--main-text-color);
+}
+
+#sidebar {
+  width: 15%;
+  background-color: var(--background-color);
+  padding: 20px;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+#stockChart {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+canvas {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+#model-container {
+  display: flex;
+  flex-direction: column;
+}
+
+#models {
+  color:var(--button-color);
+  padding: 5px 12px;
+  border: 1px solid transparent;
+  border-color: transparent transparent rgba(0, 0, 0, 0.1) transparent;
+  cursor: pointer;
+  user-select: none;
+  border-radius: 5px;
+}
+
+#trainModel {
+  display: none;
+}
