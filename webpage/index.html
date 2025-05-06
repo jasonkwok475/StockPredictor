@@ -9,6 +9,8 @@
   <link href="https://cdn.anychart.com/releases/8.11.0/css/anychart-ui.min.css" rel="stylesheet" type="text/css">
   <link href="https://cdn.anychart.com/releases/8.11.0/fonts/css/anychart-font.min.css" rel="stylesheet" type="text/css">
   <script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-core.min.js"></script>
+  <script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-bundle.min.js"></script>
+  <script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-base.min.js"></script>
   <script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-stock.min.js"></script>
   <script src="https://cdn.anychart.com/releases/8.11.0/themes/dark_glamour.min.js"></script>
   <script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-ui.min.js"></script>
@@ -25,17 +27,27 @@
       <button type="button" onclick="loadChart()">Load Chart</button>
     </form>
     <div id="model-container">
+      <hr>
       <div>
         <label for="models">Model:</label>
         <select id="models" name="models" onchange="selectModel()">
           <option value="None" selected="selected">None</option>
           <option value="Train">Train New Model</option>
         </select><br><br>
+        <button type="button" onclick="train()">Train Model</button>
       </div>
     </div>
   </div>
   <div id="stockChart"></div>
-  <div id="trainModel"></div>
+  <div id="trainModel">
+    <div id="parameters">
+
+    </div>
+    <div id="trainCharts">
+      <div id="lossChart"></div>
+      <div id="maeChart"></div>
+    </div>
+  </div>
   <script src="./index.js"></script>
 </body>
 </html>

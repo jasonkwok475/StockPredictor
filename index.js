@@ -37,6 +37,11 @@ app.get('/api/models', (req, res) => {
   });
 });
 
+app.post('/api/train', async (req, res) => {
+  let result = await stockPredictor.trainModel(await stockPredictor.getSampleData());
+  res.status(200).json(result);
+});
+
 app.post('/api/select_model', (req, res) => {
   const model_file = req.body.model;
 });
@@ -49,10 +54,6 @@ const main = async () => {
   try {
     app.listen(port, async () => {
       console.log(`Server is running at http://localhost:${port}`);
-      let result = await stockPredictor.trainModel(await stockPredictor.getSampleData());
-      console.log(result);
-      let r = await stockPredictor.predict(await stockPredictor.getSampleData());
-      console.log(r);
     });
   } catch (error) {
     console.error('Error starting server:', error);
