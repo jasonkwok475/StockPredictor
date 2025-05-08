@@ -12,6 +12,8 @@ const MODEL_FOLDER = "./model/";
  * @prop {float} low
  * @prop {float} close
  * @prop {float} vol
+ * @prop {float} rsi
+ * @prop {float} sma
  */
 
 class DataManager {

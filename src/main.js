@@ -69,7 +69,17 @@ class StockPredictor extends EventEmitter {
           {
             epochs: 100,
             verbose: 0, // Suppress Logging
-            validation_split: 0.2 //Validation results on 20% of data
+            validationSplit: 0.2, //Validation results on 20% of data
+            callbacks: [
+              {
+                onEpochEnd: (epoch, logs) => {
+                  this.emit("epochEnd", epoch, logs);
+                },
+                onTrainEnd: (logs) => {
+                  this.emit("trainEnd", logs);
+                }
+              }
+            ]
           }
         ).then((history) => resolve(history));
       } catch (e) {

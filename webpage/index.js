@@ -1,12 +1,28 @@
 var default_stock = "VOO";
 var models;
+var dataLoss = anychart.data.set([]);
+var dataMAE = anychart.data.set([]);
+
+// https://stackoverflow.com/questions/22429744/how-to-setup-route-for-websocket-server-in-express
+const socketProtocol = (window.location.protocol === 'https:' ? 'wss:' : 'ws:')
+const progressSocketUrl = socketProtocol + '//' + window.location.hostname + ':3000/progress/'
+
+// socket.onopen = () => {
+//   socket.send('Here\'s some text that the server is urgently awaiting!'); 
+// }
+
+// socket.onmessage = e => {
+//   console.log('Message from server:', e.data)
+// }
 
 $(document).ready(async function () {
+  loadTrainCharts();
   loadModels();
   loadStockChart(default_stock);
 
   $("#trainModel").hide();
-  $("#stockChart").show();});
+  $("#stockChart").show();
+});
 
 async function loadModels() {
   var response = await fetch("http://localhost:3000/api/models", { method: "GET" });
@@ -120,7 +136,7 @@ async function loadStockChart(stock) {
 function selectModel() {
   var model = $('#models').val();
   if (model == "Train") {
-    $("#trainModel").show();
+    $("#trainModel").css({ display: "flex" });
     $("#stockChart").hide();
   } else {
     $("#trainModel").hide();
@@ -129,26 +145,11 @@ function selectModel() {
   }
 } 
 
-async function train() {
-  var response = await fetch("http://localhost:3000/api/train", { 
-    method: "POST",
-    headers: {
-      'Content-Type': 'application/json'
-    } 
-  });
-  let r = await response.json();
-  console.log(r);
-  let dataLoss = [];
-  let dataMAE = [];
-  for (let i = 0; i < r.epoch.length; i++) {
-    dataLoss.push([r.epoch[i] + 1, r.history.loss[i]]);
-    dataMAE.push([r.epoch[i] + 1, r.history.MAE[i]]);
-  }
-
+function loadTrainCharts() {
   var lossChart = anychart.line(dataLoss);
   lossChart.xScale(anychart.scales.log());
   lossChart.xScale().minimum(1);
-  lossChart.xScale().maximum(r.epoch.length);
+  lossChart.xScale().maximum(dataLoss.length);
   lossChart.xAxis().title("Epochs");
   lossChart.yScale(anychart.scales.log());
   lossChart.title(`Model Loss`);
@@ -158,11 +159,41 @@ async function train() {
   var maeChart = anychart.line(dataMAE);
   maeChart.xScale(anychart.scales.log());
   maeChart.xScale().minimum(1);
-  maeChart.xScale().maximum(r.epoch.length);
+  maeChart.xScale().maximum(dataMAE.length);
   maeChart.xAxis().title("Epochs");
   maeChart.yScale(anychart.scales.log());
   maeChart.title(`Model MAE`);
   maeChart.container('maeChart');
   maeChart.draw();
+}
 
+async function train() {
+  const socket = new WebSocket(progressSocketUrl);
+  var totalEpochs = 100;
+
+  $("#progressContainer").show();
+  $("#progressBar").css("width", "0%");
+  $("#progressText").text("0%");
+  $("#trainButton").prop('disabled', true);
+
+  fetch("http://localhost:3000/api/train", { 
+    method: "POST",
+    headers: {
+      'Content-Type': 'application/json'
+    } 
+  });
+
+  socket.onmessage = e => {
+    var d = JSON.parse(e.data);
+    dataLoss.append({ x: d.epoch, value: d.loss });
+    dataMAE.append({ x: d.epoch, value: d.mae });
+    $("#progressBar").css("width", d.epoch / totalEpochs * 100 + "%");
+    $("#progressText").text(Math.round(d.epoch / totalEpochs * 10000) / 100 + "%");
+  
+    if (d.epoch == totalEpochs) {
+      $("#progressContainer").hide();
+      $("#trainButton").prop('disabled', false);
+      socket.close();
+    }
+  } 
 }

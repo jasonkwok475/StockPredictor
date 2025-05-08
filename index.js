@@ -1,10 +1,12 @@
 const express = require('express');
+const enableWs = require('express-ws');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 
 const app = express();
 const port = 3000;
+enableWs(app)
 
 const MODEL_FOLDER = './model'; //! Put these into a config file?
 
@@ -41,6 +43,18 @@ app.post('/api/train', async (req, res) => {
   let result = await stockPredictor.trainModel(await stockPredictor.getSampleData());
   res.status(200).json(result);
 });
+
+app.ws('/progress', (ws, req) => {
+
+  stockPredictor.on('epochEnd', (epoch, logs) => {
+    ws.send(JSON.stringify({ epoch: epoch + 1, loss: logs.loss, mae: logs.MAE }));
+  });
+
+  ws.on('close', () => {
+      console.log('WebSocket was closed')
+  });
+})
+
 
 app.post('/api/select_model', (req, res) => {
   const model_file = req.body.model;
