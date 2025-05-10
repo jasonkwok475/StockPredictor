@@ -37,7 +37,7 @@ body {
   flex-direction: column;
 }
 
-#models, #stockSymbol, input[type="text"], button {
+#models, #stockSymbol, input[type="text"], input[type="number"], button {
   padding: 5px 12px;
   border: 1px solid transparent;
   border-color: transparent transparent rgba(0, 0, 0, 0.1) transparent;
@@ -53,8 +53,7 @@ button:hover:enabled {
   box-shadow: 5px 10px 18px black;
 }
 
-button:disabled,
-button[disabled]{
+button:disabled, button[disabled]{
   background-color: #cccccc;
 }
 

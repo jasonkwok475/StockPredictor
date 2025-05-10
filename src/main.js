@@ -1,5 +1,4 @@
 const { EventEmitter } = require("stream");
-const fs = require("fs");
 const tf = require("@tensorflow/tfjs");
 const DataManager = require('./dataManager.js');
 
@@ -18,23 +17,16 @@ const SAMPLE_DATA = './data/voo.json';
  * 
  */
 class StockPredictor extends EventEmitter {
+
+  considered_intervals = 3;
+
   constructor() {
     super();
-    this.stockData = [];
-    this.dataManager = new DataManager();
+    this.dataManager = new DataManager(this.considered_intervals);
     this.sample_data = null;
 
     this.model = this.buildModel();
     this.model.summary();
-  }
-
-  addStockData(data) {
-    this.stockData.push(data);
-    this.emit("dataAdded", data);
-  }
-
-  getStockData() {
-    return this.stockData;
   }
 
   buildModel() {
@@ -70,16 +62,10 @@ class StockPredictor extends EventEmitter {
             epochs: 100,
             verbose: 0, // Suppress Logging
             validationSplit: 0.2, //Validation results on 20% of data
-            callbacks: [
-              {
-                onEpochEnd: (epoch, logs) => {
-                  this.emit("epochEnd", epoch, logs);
-                },
-                onTrainEnd: (logs) => {
-                  this.emit("trainEnd", logs);
-                }
-              }
-            ]
+            callbacks: [{
+              onEpochEnd: (epoch, logs) => this.emit("epochEnd", epoch, logs),
+              onTrainEnd: (logs) =>  this.emit("trainEnd", logs)
+            }]
           }
         ).then((history) => resolve(history));
       } catch (e) {
@@ -92,7 +78,7 @@ class StockPredictor extends EventEmitter {
   async predict(data) {
     return new Promise(async (resolve, reject) => {
       try {
-        let r = await this.model.predict(data.data, data.labels, {verbose:0});
+        let r = await this.model.predict(data.data, data.labels, { verbose: 0 });
         return resolve(r);
       } catch (e) {
         console.log(e);
@@ -109,5 +95,3 @@ class StockPredictor extends EventEmitter {
 }
 
 module.exports = StockPredictor;
-
-//https://www.anychart.com/blog/2023/05/02/candlestick-chart-stock-analysis/

@@ -20,7 +20,8 @@ class DataManager {
 
   considered_intervals = 3;
 
-  constructor() {
+  constructor(interval = this.considered_intervals) {
+    this.considered_intervals = interval;
     this.checkFolders();
   }
 

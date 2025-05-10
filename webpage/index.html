@@ -24,7 +24,7 @@
     <form id="stockForm">
       <label for="stockSymbol">Stock Symbol:</label><br>
       <input type="text" id="stockSymbol" name="stockSymbol" placeholder="e.g., AAPL"><br><br>
-      <button type="button" onclick="loadChart()">Load Chart</button>
+      <button type="button" onclick="loadChart()" id="loadChart">Load Chart</button>
     </form>
     <div id="model-container">
       <hr>
@@ -42,20 +42,17 @@
     <div id="parameters">
       <div id="dataSelection">
         <h2>Data Selection</h2>
-        <label for="trainData">Training Data:</label><br>
+        <label for="trainData">Training Data:</label>
         <input type="text" id="trainData" name="trainData" placeholder="e.g., 2020-01-01 to 2021-01-01"><br><br>
-        <label for="testData">Testing Data:</label><br>
+        <label for="testData">Testing Data:</label>
         <input type="text" id="testData" name="testData" placeholder="e.g., 2021-01-02 to 2021-12-31"><br><br>
       </div>
       <div id="parameterSelection">
         <h2>Model Parameters</h2>
-        <label for="epochs">Epochs:</label><br>
-        <input type="number" id="epochs" name="epochs" value="10"><br><br>
-        <label for="batchSize">Batch Size:</label><br>
+        <label for="epochs">Epochs:</label>
+        <input type="number" id="epochs" name="epochs" value="10" min="1" step="1"><br><br>
+        <label for="batchSize">Batch Size:</label>
         <input type="number" id="batchSize" name="batchSize" value="32"><br><br>
-        <label for="learningRate">Learning Rate:</label><br>
-        <input type="number" id="learningRate" name="learningRate" value="0.001"><br><br>
-        <!-- <label for="dropout">Dropout Rate:</label><br> -->
         <table style="width:100%;">
           <tr>
             <td style="width:20%">

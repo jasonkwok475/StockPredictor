@@ -1,19 +1,12 @@
 var default_stock = "VOO";
 var models;
+var epoch = 0;
 var dataLoss = anychart.data.set([]);
 var dataMAE = anychart.data.set([]);
 
 // https://stackoverflow.com/questions/22429744/how-to-setup-route-for-websocket-server-in-express
 const socketProtocol = (window.location.protocol === 'https:' ? 'wss:' : 'ws:')
 const progressSocketUrl = socketProtocol + '//' + window.location.hostname + ':3000/progress/'
-
-// socket.onopen = () => {
-//   socket.send('Here\'s some text that the server is urgently awaiting!'); 
-// }
-
-// socket.onmessage = e => {
-//   console.log('Message from server:', e.data)
-// }
 
 $(document).ready(async function () {
   loadTrainCharts();
@@ -35,7 +28,16 @@ async function loadModels() {
   }
 }
 
+function loadChart() {
+  var stock = $("#stockSymbol").val();
+  console.log(stock);
+  if (stock == "") return;
+  loadStockChart(stock);
+}
+
 async function loadStockChart(stock) {
+  $("#loadChart").prop('disabled', true);
+
   var response = await fetch("http://localhost:3000/api/data", { 
     method: "POST",
     body: JSON.stringify({ stock }),
@@ -59,11 +61,6 @@ async function loadStockChart(stock) {
   var volumeMapping = dataTable.mapAs({
     x: format.findIndex(x => x == "time"),
     value: format.findIndex(x => x == "volume")
-  });
-
-  var rsiMapping = dataTable.mapAs({
-    x: format.findIndex(x => x == "time"),
-    value: format.findIndex(x => x == "rsi")
   });
 
   var chart = anychart.stock();
@@ -131,6 +128,8 @@ async function loadStockChart(stock) {
   chart.title(`${stock.toUpperCase()} Stock Chart`);
   chart.container('stockChart');
   chart.draw();
+
+  $("#loadChart").prop('disabled', false);
 }
 
 function selectModel() {
@@ -141,11 +140,12 @@ function selectModel() {
   } else {
     $("#trainModel").hide();
     $("#stockChart").show();
-
   }
 } 
 
 function loadTrainCharts() {
+  //TODO Look into normalizing these values and plotting them on the same chart
+  //TODO Add accuracy here too?
   var lossChart = anychart.line(dataLoss);
   lossChart.xScale(anychart.scales.log());
   lossChart.xScale().minimum(1);
@@ -169,7 +169,7 @@ function loadTrainCharts() {
 
 async function train() {
   const socket = new WebSocket(progressSocketUrl);
-  var totalEpochs = 100;
+  var totalEpochs = 100; //! Make this dynamic, get it from the user
 
   $("#progressContainer").show();
   $("#progressBar").css("width", "0%");
@@ -185,11 +185,15 @@ async function train() {
 
   socket.onmessage = e => {
     var d = JSON.parse(e.data);
-    dataLoss.append({ x: d.epoch, value: d.loss });
-    dataMAE.append({ x: d.epoch, value: d.mae });
+
+    //! Fix this, dataLoss is not an array, its a chart object
+    epoch += 1;
+    
+    dataLoss.append({ x: epoch, value: d.loss });
+    dataMAE.append({ x: epoch, value: d.mae });
     $("#progressBar").css("width", d.epoch / totalEpochs * 100 + "%");
     $("#progressText").text(Math.round(d.epoch / totalEpochs * 10000) / 100 + "%");
-  
+
     if (d.epoch == totalEpochs) {
       $("#progressContainer").hide();
       $("#trainButton").prop('disabled', false);

@@ -1,8 +1,6 @@
-//process.env.key
 const request = require("request");
 const { URL } = require("url");
 const fs = require('fs');
-const { start } = require("repl");
 require("dotenv").config();
 
 const base_link = "https://api.polygon.io";
