@@ -19,6 +19,10 @@ const SAMPLE_DATA = './data/voo.json';
 class StockPredictor extends EventEmitter {
 
   considered_intervals = 3;
+  defaultTrainParameters = {
+    epochs: 100,
+    batchSize: 32
+  };
 
   constructor() {
     super();
@@ -52,14 +56,16 @@ class StockPredictor extends EventEmitter {
    * 
    * @param {*} data 
    */
-  async trainModel(data) {
+  async trainModel(data, parameters = this.defaultTrainParameters) {
+    let { epochs, batchSize } = parameters;
     return new Promise((resolve, reject) => {
       try {
         this.model.fit(
           data.data,
           data.labels,
           {
-            epochs: 100,
+            epochs,
+            batchSize,
             verbose: 0, // Suppress Logging
             validationSplit: 0.2, //Validation results on 20% of data
             callbacks: [{

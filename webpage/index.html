@@ -24,7 +24,7 @@
     <form id="stockForm">
       <label for="stockSymbol">Stock Symbol:</label><br>
       <input type="text" id="stockSymbol" name="stockSymbol" placeholder="e.g., AAPL"><br><br>
-      <button type="button" onclick="loadChart()" id="loadChart">Load Chart</button>
+      <button type="button" onclick="loadSymbolChart()" id="loadChart">Load Chart</button>
     </form>
     <div id="model-container">
       <hr>
@@ -52,7 +52,7 @@
         <label for="epochs">Epochs:</label>
         <input type="number" id="epochs" name="epochs" value="10" min="1" step="1"><br><br>
         <label for="batchSize">Batch Size:</label>
-        <input type="number" id="batchSize" name="batchSize" value="32"><br><br>
+        <input type="number" id="batchSize" name="batchSize" value="32" min="1" step="1"><br><br>
         <table style="width:100%;">
           <tr>
             <td style="width:20%">

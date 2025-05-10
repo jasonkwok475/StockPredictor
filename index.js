@@ -39,7 +39,8 @@ app.get('/api/models', (req, res) => {
 });
 
 app.post('/api/train', async (req, res) => {
-  let result = await stockPredictor.trainModel(await stockPredictor.getSampleData());
+  let params = req.body;
+  let result = await stockPredictor.trainModel(await stockPredictor.getSampleData(), params);
   res.status(200).json(result);
 });
 

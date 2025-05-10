@@ -28,7 +28,7 @@ async function loadModels() {
   }
 }
 
-function loadChart() {
+function loadSymbolChart() {
   var stock = $("#stockSymbol").val();
   console.log(stock);
   if (stock == "") return;
@@ -169,7 +169,8 @@ function loadTrainCharts() {
 
 async function train() {
   const socket = new WebSocket(progressSocketUrl);
-  var totalEpochs = 100; //! Make this dynamic, get it from the user
+  var totalEpochs = parseInt($("#epochs").val()); 
+  var batchSize = parseInt($("#batchSize").val()); 
 
   $("#progressContainer").show();
   $("#progressBar").css("width", "0%");
@@ -178,6 +179,7 @@ async function train() {
 
   fetch("http://localhost:3000/api/train", { 
     method: "POST",
+    body: JSON.stringify({ epochs: totalEpochs, batchSize }),
     headers: {
       'Content-Type': 'application/json'
     } 
