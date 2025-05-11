@@ -53,18 +53,18 @@ app.ws('/progress', (ws, req) => {
   ws.on('close', () => console.log('WebSocket was closed'));
 });
 
-app.get('/api/save_model', async (req, res) => {
+app.post('/api/save_model', async (req, res) => {
   const model_name = req.body.model_name;
   await stockPredictor.saveModel(model_name);
   res.status(200).json({ message: 'Model saved successfully' }); 
 });
 
-app.post('/api/select_model', (req, res) => {
-  const model_file = req.body.model;
+app.post('/api/select_model', async (req, res) => {
+  const model_name = req.body.model_name;
+  await stockPredictor.loadModel(model_name);
 });
 
-app.post('/api/predict', (req, res) => {
-  const data = req.data;
+app.post('/api/predict', async (req, res) => {
 });
 
 const main = async () => {

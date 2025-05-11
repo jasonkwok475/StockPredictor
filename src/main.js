@@ -1,5 +1,6 @@
 const { EventEmitter } = require("stream");
 const tf = require("@tensorflow/tfjs");
+require('@tensorflow/tfjs-node');
 const DataManager = require('./dataManager.js');
 
 const SAMPLE_DATA = './data/voo.json';
@@ -93,6 +94,7 @@ class StockPredictor extends EventEmitter {
     });
   }
 
+  //TODO Remove this, its just for testing purposes
   async getSampleData() {
     if (this.sample_data) return this.sample_data;
     this.sample_data = await this.dataManager.compileTrainingData(SAMPLE_DATA);
@@ -100,7 +102,12 @@ class StockPredictor extends EventEmitter {
   }
 
   async saveModel(name) {
-    await this.model.save(`file:///model/${name}`);
+    await this.model.save(`file://./model/${name}`);
+  }
+
+  async loadModel(name) {
+    this.model = name == "None" ? this.buildModel() : await tf.loadLayersModel(`file://./model/${name}/model.json`);
+    this.model.summary();
   }
 }
 

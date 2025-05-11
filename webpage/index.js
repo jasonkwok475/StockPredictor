@@ -132,6 +132,15 @@ async function loadStockChart(stock) {
   indicatorPlot.yScale().minimum(0);
   indicatorPlot.yScale().maximum(100);
 
+  var controller = indicatorPlot.annotations();
+
+  controller.horizontalLine({
+    valueAnchor: 70
+  });
+  controller.horizontalLine({
+    valueAnchor: 30
+  });
+
   indicatorPlot.legend().titleFormat(function() {
     return anychart.format.dateTime(this.value, "HH:mm dd MMMM yyyy");
   });
@@ -144,7 +153,7 @@ async function loadStockChart(stock) {
   $("#loadChart").prop('disabled', false);
 }
 
-function selectModel() {
+async function selectModel() {
   var model = $('#models').val();
   if (model == "Train") {
     $("#trainModel").css({ display: "flex" });
@@ -152,6 +161,17 @@ function selectModel() {
   } else {
     $("#trainModel").hide();
     $("#stockChart").show();
+
+    let response = await fetch("http://localhost:3000/api/select_model", { 
+      method: "POST",
+      body: JSON.stringify({ model_name: model }),
+      headers: {
+        'Content-Type': 'application/json'
+      } 
+    });
+
+    let res = await response.json();
+    
   }
 } 
 
@@ -184,7 +204,7 @@ async function train() {
   var totalEpochs = parseInt($("#epochs").val()); 
   var batchSize = parseInt($("#batchSize").val()); 
 
-  $("#saveButton").hide();
+  $("#saveModelTable").hide();
   $("#progressContainer").show();
   $("#progressBar").css("width", "0%");
   $("#progressText").text("0%");
@@ -212,7 +232,7 @@ async function train() {
     if (d.epoch == totalEpochs) {
       $("#progressContainer").hide();
       $("#trainButton").prop('disabled', false);
-      $("#saveButton").show();
+      $("#saveModelTable").show();
       socket.close();
     }
   } 
@@ -221,8 +241,9 @@ async function train() {
 async function saveModel() {
   //TODO Actually add an input for model name nd see if it exists
   var modelName = $("#modelName").val();
+  console.log(modelName);
   if (modelName == "") return;
-  fetch("http://localhost:3000/api/save_model", { 
+  await fetch("http://localhost:3000/api/save_model", { 
     method: "POST",
     body: JSON.stringify({ model_name: modelName }),
     headers: {
