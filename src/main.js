@@ -98,6 +98,10 @@ class StockPredictor extends EventEmitter {
     this.sample_data = await this.dataManager.compileTrainingData(SAMPLE_DATA);
     return this.sample_data
   }
+
+  async saveModel(name) {
+    await this.model.save(`file:///model/${name}`);
+  }
 }
 
 module.exports = StockPredictor;

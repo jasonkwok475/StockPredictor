@@ -1,5 +1,5 @@
 var default_stock = "VOO";
-var models;
+var models, chart;
 var epoch = 0;
 var dataLoss = anychart.data.set([]);
 var dataMAE = anychart.data.set([]);
@@ -30,23 +30,26 @@ async function loadModels() {
 
 function loadSymbolChart() {
   var stock = $("#stockSymbol").val();
-  console.log(stock);
   if (stock == "") return;
+  chart.dispose();
   loadStockChart(stock);
 }
 
-async function loadStockChart(stock) {
-  $("#loadChart").prop('disabled', true);
-
-  var response = await fetch("http://localhost:3000/api/data", { 
-    method: "POST",
-    body: JSON.stringify({ stock }),
-    headers: {
-      'Content-Type': 'application/json'
-    } 
+async function getStockData(stock) {
+  return new Promise(async (resolve, reject) => {
+    var response = await fetch("http://localhost:3000/api/data", { 
+      method: "POST",
+      body: JSON.stringify({ stock }),
+      headers: {
+        'Content-Type': 'application/json'
+      } 
+    });
+    let res = await response.json();
+    return resolve(res);
   });
-  let { data, format } = await response.json();
+}
 
+function chartMapping({ data, format }) {
   var dataTable = anychart.data.table(format.findIndex(x => x == "time"));
   dataTable.addData(data.reverse());
 
@@ -63,7 +66,16 @@ async function loadStockChart(stock) {
     value: format.findIndex(x => x == "volume")
   });
 
-  var chart = anychart.stock();
+  return { dataTable, candlestickMapping, volumeMapping }; 
+}
+
+async function loadStockChart(stock) {
+  $("#loadChart").prop('disabled', true);
+
+  let { data, format } = await getStockData(stock);
+  let { dataTable, candlestickMapping, volumeMapping } = chartMapping({ data, format });
+
+  chart = anychart.stock();
   anychart.theme('darkGlamour');
 
   var mainPlot = chart.plot(0);
@@ -172,6 +184,7 @@ async function train() {
   var totalEpochs = parseInt($("#epochs").val()); 
   var batchSize = parseInt($("#batchSize").val()); 
 
+  $("#saveButton").hide();
   $("#progressContainer").show();
   $("#progressBar").css("width", "0%");
   $("#progressText").text("0%");
@@ -199,7 +212,21 @@ async function train() {
     if (d.epoch == totalEpochs) {
       $("#progressContainer").hide();
       $("#trainButton").prop('disabled', false);
+      $("#saveButton").show();
       socket.close();
     }
   } 
+}
+
+async function saveModel() {
+  //TODO Actually add an input for model name nd see if it exists
+  var modelName = $("#modelName").val();
+  if (modelName == "") return;
+  fetch("http://localhost:3000/api/save_model", { 
+    method: "POST",
+    body: JSON.stringify({ model_name: modelName }),
+    headers: {
+      'Content-Type': 'application/json'
+    } 
+  });
 }
