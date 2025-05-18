@@ -1,5 +1,5 @@
 var default_stock = "VOO";
-var models, chart;
+var models, chart, lossChart, maeChart;
 var epoch = 0;
 var dataLoss = anychart.data.set([]);
 var dataMAE = anychart.data.set([]);
@@ -17,6 +17,16 @@ $(document).ready(async function () {
   $("#stockChart").show();
 });
 
+function toggleInputs(hide = true) {
+  $("#loadChart").prop('disabled', hide); // Load chart button
+  $("#saveButton").prop('disabled', hide); // Save model button
+  $("#trainButton").prop('disabled', hide); // Train model button
+  $("#models").prop('disabled', hide); // Model dropdown
+  $("#stockSymbol").prop('disabled', hide); // Stock symbol input
+  $("#epochs").prop('disabled', hide); // Epochs input
+  $("#batchSize").prop('disabled', hide); // Batch size input
+}
+
 async function loadModels() {
   var response = await fetch("http://localhost:3000/api/models", { method: "GET" });
   models = await response.json();
@@ -33,6 +43,9 @@ function loadSymbolChart() {
   if (stock == "") return;
   chart.dispose();
   loadStockChart(stock);
+  
+  $("#trainModel").hide();
+  $("#stockChart").show();
 }
 
 async function getStockData(stock) {
@@ -156,12 +169,23 @@ async function loadStockChart(stock) {
 async function selectModel() {
   var model = $('#models').val();
   if (model == "Train") {
+
+    lossChart.dispose(); 
+    maeChart.dispose();
+    epochs = 0;
+    dataLoss = anychart.data.set([]);
+    dataMAE = anychart.data.set([]);
+
+    loadTrainCharts();
+
     $("#trainModel").css({ display: "flex" });
     $("#stockChart").hide();
   } else {
     $("#trainModel").hide();
     $("#stockChart").show();
+  }
 
+  if (model !== "None") {
     let response = await fetch("http://localhost:3000/api/select_model", { 
       method: "POST",
       body: JSON.stringify({ model_name: model }),
@@ -171,14 +195,13 @@ async function selectModel() {
     });
 
     let res = await response.json();
-    
   }
 } 
 
 function loadTrainCharts() {
   //TODO Look into normalizing these values and plotting them on the same chart
   //TODO Add accuracy here too?
-  var lossChart = anychart.line(dataLoss);
+  lossChart = anychart.line(dataLoss);
   lossChart.xScale(anychart.scales.log());
   lossChart.xScale().minimum(1);
   lossChart.xScale().maximum(dataLoss.length);
@@ -188,7 +211,7 @@ function loadTrainCharts() {
   lossChart.container('lossChart');
   lossChart.draw();
   
-  var maeChart = anychart.line(dataMAE);
+  maeChart = anychart.line(dataMAE);
   maeChart.xScale(anychart.scales.log());
   maeChart.xScale().minimum(1);
   maeChart.xScale().maximum(dataMAE.length);
@@ -208,7 +231,8 @@ async function train() {
   $("#progressContainer").show();
   $("#progressBar").css("width", "0%");
   $("#progressText").text("0%");
-  $("#trainButton").prop('disabled', true);
+
+  toggleInputs();
 
   fetch("http://localhost:3000/api/train", { 
     method: "POST",
@@ -231,14 +255,16 @@ async function train() {
 
     if (d.epoch == totalEpochs) {
       $("#progressContainer").hide();
-      $("#trainButton").prop('disabled', false);
       $("#saveModelTable").show();
+
+      toggleInputs(false);
       socket.close();
     }
   } 
 }
 
 async function saveModel() {
+  //TODO Add model to dropdown list after creation
   //TODO Actually add an input for model name nd see if it exists
   var modelName = $("#modelName").val();
   console.log(modelName);

@@ -47,7 +47,7 @@ class DataManager {
         let format = filedata.format;
   
         let result = filedata.data.map((row) => {
-          if (row.includes(undefined) || row.includes('')) return;
+          if (row.includes(undefined) || row.includes('') || row.includes(NaN)) return;
           return {
             date: new Date(row[format.findIndex(x => x == "time")]),
             open: parseFloat(row[format.findIndex(x => x == "open")]),
@@ -56,7 +56,7 @@ class DataManager {
             close: parseFloat(row[format.findIndex(x => x == "close")]),
             vol: parseFloat(row[format.findIndex(x => x == "volume")]),
             rsi: parseFloat(row[format.findIndex(x => x == "rsi")]),
-            sma: parseFloat(row[format.findIndex(x => x == "sma")])
+            ema: parseFloat(row[format.findIndex(x => x == "ema")])
           }
         });
         return resolve(result.filter(item => item)); // Removes undefined elements
@@ -84,7 +84,7 @@ class DataManager {
           data[i + j].close,
           data[i + j].vol,
           data[i + j].rsi,
-          data[i + j].sma
+          data[i + j].ema
         )
       }
       training_labels.push(data[i + this.considered_intervals].close);
