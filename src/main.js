@@ -107,7 +107,7 @@ class StockPredictor extends EventEmitter {
 
   async loadModel(name) {
     this.model = name == "Train" ? this.buildModel() : await tf.loadLayersModel(`file://./model/${name}/model.json`);
-    this.model.summary();
+    //this.model.summary();
   }
 }
 

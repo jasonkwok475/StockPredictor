@@ -115,27 +115,6 @@ class ApiManager {
     return result;
   }
 
-  //! Update parameters here
-  async getIndicator(symbol, startdate, indicator, parameters = { timespan: this._interval.timespan, window: 20, series_type: "close"}) { 
-    return; //TODO Remove this
-    try {
-      let params = { 
-        ...this._baseParams, 
-        ...parameters,
-        order: 'asc',
-        'timestamp.gte': startdate
-      };
-      let result = await this._request(`/v1/indicators/${indicator.toLowerCase()}/${symbol.toUpperCase()}`, params);
-      let data = [];
-      let format = [ "time", indicator.toLowerCase() ];
-      let v = result.results.values;
-      for (let i = 0; i < v.length; i++) {
-        data[i] = [ v[i].timestamp, v[i].value ];
-      }
-      return { data, format };
-    } catch (e) { console.log(e); }
-  }
-
   async getTrainingData(symbol, startdate) {
     return new Promise((resolve, reject) => {
       const filePath = DATA_FOLDER + symbol.toLowerCase() + `.json`;
@@ -147,70 +126,35 @@ class ApiManager {
           format: [],
           data: []
         }
-        if (err) {
-          fs.writeFile(filePath, JSON.stringify(symbolData, null, 2), (err) => { if (err) console.log(err); }); //Create the file if it doesn't exist
+        if (!err) return resolve(JSON.parse(data));
+
+        fs.writeFile(filePath, JSON.stringify(symbolData, null, 2), (err) => { if (err) console.log(err); }); //Create the file if it doesn't exist
+        
+        Promise.all([
+          this.getStockData(symbol, startdate, this.getCurrentDate()),
+          //this.getIndicator(symbol, startdate, "RSI"),
+          //this.getIndicator(symbol, startdate, "SMA")
+        ]).then((values) => {
+          let tempData = values[0];
+          let tempFormat = this._defaultFormatLong;
+          tempFormat.push("rsi", "ema");
+
+          let rsi = this._getRSI(tempData, tempFormat);
+          let ema = this._getEMA(tempData, tempFormat);
+
+          for (let i = 0; i < tempData.length; i++) {
+            tempData[i].push(rsi[i], ema[i]);
+          }
+
+          symbolData.data.push(...tempData); //TODO Merge and account for timestamp duplicates
+          symbolData.format.push(...tempFormat);
+          fs.writeFile(filePath, JSON.stringify(symbolData), (err) => { if (err) console.log(err); }); //Update the file with new data
           
-          Promise.all([
-            this.getStockData(symbol, startdate, this.getCurrentDate()),
-            //this.getIndicator(symbol, startdate, "RSI"),
-            //this.getIndicator(symbol, startdate, "SMA")
-          ]).then((values) => {
-            let tempData = values[0];
-            let tempFormat = this._defaultFormatLong;
-            tempFormat.push("rsi", "ema");
-
-            //TODO Both RSI and EMA are not working, fix this
-
-            for (let i = 0; i < tempData.length; i++) {
-              let close = tempData[i][this._defaultFormat.findIndex(x => x == "c")];
-              let high = tempData[i][this._defaultFormat.findIndex(x => x == "h")];
-              let rsi = "", ema = "";
-              
-              if (i > this._rsiLength - 1) {
-                let list = tempData.slice(i - this._rsiLength + 1, i + 1);
-                let gain = 0, loss = 0;
-
-                for (let j = 0; j < list.length; j++) {
-                  let open = list[j][this._defaultFormat.findIndex(x => x == "o")];
-                  let diff = list[j][this._defaultFormat.findIndex(x => x == "c")] - open;
-                  if (diff > 0) {
-                    gain += diff / open;
-                  } else {
-                    loss += Math.abs(diff / open);
-                  }
-                }
-
-                rsi = 100 - (100 / (1 + (gain / loss))); // RSI
-              }
-
-              //TODO Fix this here, first EMA point is 0?
-              let sum = 0;
-              if (i == this._emaLength - 1) {
-                ema = sum / this._emaLength; // Current SMA
-              } else if (i < this._emaLength) {
-                sum += close;
-              } else {
-                let lastEma = tempData[i - 1][tempFormat.findIndex(x => x == "ema")];
-                ema = (close - lastEma) * this._emaSmoothing + lastEma; // Current EMA
-              }
-
-              tempData[i].push(rsi, ema);
-            }
-
-            console.log(tempData[tempData.length - 1]);
-
-            symbolData.data.push(...tempData); //TODO Merge and account for timestamp duplicates
-            symbolData.format.push(...tempFormat);
-            fs.writeFile(filePath, JSON.stringify(symbolData), (err) => { if (err) console.log(err); }); //Update the file with new data
-            
-            return resolve(symbolData);
-          }).catch((err) => { 
-            reject(err);
-            return console.log(err); 
-          });
-        } else {
-          return resolve(JSON.parse(data));
-        }      
+          return resolve(symbolData);
+        }).catch((err) => { 
+          reject(err);
+          return console.log(err); 
+        });    
       });
       //save into txt file for dataManager.js
       //append into existing file for stock if it exists?
@@ -219,18 +163,67 @@ class ApiManager {
     });
   }
 
-  _processData(data) {
-    let result = [];
-    for (let [key, value] of Object.entries(data)) {
-      let temp = { date: new Date(key) };
-      Object.keys(value).forEach((k, i) => {
-        temp[k.split(" ")[k.split(" ").length - 1]] = value[k];
-      });
-      result.push(temp);
+  /**
+   * Calculate the RSI values given a list of data points
+   * https://www.investopedia.com/terms/r/rsi.asp
+   * @param {array[]} list List of data points
+   * @returns {float[]} List of RSI values
+   */
+  _getRSI(data, format) {
+    let rsi = [ "" ];
+    let gain = [ 0 ], loss = [ 0 ], avgGain = [ "" ], avgLoss = [ "" ];
+
+    for (let i = 1; i < data.length; i++) {
+      let close = data[i][format.findIndex(x => x == "close")];
+      let diff = close - data[i - 1][format.findIndex(x => x == "close")];
+
+      gain.push(Math.max(0, diff));
+      loss.push(Math.max(0, -diff));
+
+      if (i > this._rsiLength - 1) {
+        avgGain.push((avgGain[i - 1] * (this._rsiLength - 1) + gain[i]) / this._rsiLength);
+        avgLoss.push((avgLoss[i - 1] * (this._rsiLength - 1) + loss[i]) / this._rsiLength);
+      } else {
+        if (i == this._rsiLength - 1) {
+          avgGain.push(gain.slice(i - this._rsiLength + 1, i + 1).reduce((a,b) => a + b, 0) / this._rsiLength);
+          avgLoss.push(loss.slice(i - this._rsiLength + 1, i + 1).reduce((a,b) => a + b, 0) / this._rsiLength);
+        } else {
+          avgGain.push("");
+          avgLoss.push("");
+        }
+      }
+
+      (avgGain[i] == "") ? rsi.push("") : rsi.push(100 - (100 / (1 + avgGain[i] / avgLoss[i])));
     }
-    return result;
+    return rsi;
   }
 
+  /**
+   * Calculate the EMA value given a list of data points
+   * https://www.investopedia.com/terms/e/ema.asp
+   * @param {list} list List of data points
+   * @returns EMA value
+   */
+  _getEMA(data, format) {
+    let ema = [ "" ];
+
+    for (let i = 1; i < data.length; i++) {
+      if (i == this._emaLength - 1) {
+        let sum = data.slice(i - this._emaLength + 1, i + 1).reduce((a,b) => a + b[format.findIndex(x => x == "close")], 0);
+        ema.push(sum / this._emaLength); // Current SMA
+      } else if (i >= this._emaLength) {
+        let close = data[i][format.findIndex(x => x == "close")];
+        let lastEma = ema[i - 1];
+        ema.push((close - lastEma) * this._emaSmoothing + lastEma); // Current EMA
+      } else ema.push("");
+    }
+    return ema;
+  }
+
+  /**
+   * Get the current date in YYYY-MM-DD format
+   * @returns {string} Current date 
+   */
   getCurrentDate() {
     const d = new Date;
     let month = d.getMonth() + 1;
