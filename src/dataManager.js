@@ -91,6 +91,27 @@ class DataManager {
     }
     return {data: tf.tensor(training_data), labels: tf.tensor(training_labels)};
   }
+
+  async getPredictData(path) {
+    let data = await this.extractData(path);
+    let training_data = [];
+
+    for (let i = 0; i < 1; i++) {
+      training_data[i] = [];
+      for (let j = 0; j < this.considered_intervals; j++) {
+        training_data[i].push(
+          data[i + j].open,
+          data[i + j].high,
+          data[i + j].low,
+          data[i + j].close,
+          data[i + j].vol,
+          data[i + j].rsi,
+          data[i + j].ema
+        )
+      }
+    }
+    return tf.tensor(training_data);
+  }
 }
 
 module.exports = DataManager;

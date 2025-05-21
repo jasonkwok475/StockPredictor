@@ -3,6 +3,7 @@ var models, chart, lossChart, maeChart;
 var epoch = 0;
 var dataLoss = anychart.data.set([]);
 var dataMAE = anychart.data.set([]);
+var currentStock = default_stock;
 
 // https://stackoverflow.com/questions/22429744/how-to-setup-route-for-websocket-server-in-express
 const socketProtocol = (window.location.protocol === 'https:' ? 'wss:' : 'ws:')
@@ -41,7 +42,6 @@ async function loadModels() {
 function loadSymbolChart() {
   var stock = $("#stockSymbol").val();
   if (stock == "") return;
-  chart.dispose();
   loadStockChart(stock);
   
   $("#trainModel").hide();
@@ -86,7 +86,16 @@ async function loadStockChart(stock) {
   $("#loadChart").prop('disabled', true);
 
   let { data, format } = await getStockData(stock);
+  if (data.length == 0) {
+    alert("Error: No data found for this stock or rate limit exceeded. Please try again later.");
+    $("#loadChart").prop('disabled', false);
+    return;
+  }
+
   let { dataTable, candlestickMapping, volumeMapping } = chartMapping({ data, format });
+  currentStock = stock;
+
+  chart?.dispose();
 
   chart = anychart.stock();
   anychart.theme('darkGlamour');
@@ -124,7 +133,7 @@ async function loadStockChart(stock) {
   extraYAxis.title("Volume");
 
   var volumeSeries = mainPlot.column(volumeMapping);
-  volumeSeries.fill("LightSteelBlue", 0.3)
+  volumeSeries.fill("LightSteelBlue", 0.3);
   volumeSeries.name("Volume");
 
   var extraYScale = anychart.scales.linear();
@@ -184,6 +193,8 @@ async function selectModel() {
     $("#trainModel").hide();
     $("#stockChart").show();
   }
+
+  !["Train", "None"].includes(model) ? $("#predictButton").show() : $("#predictButton").hide();
 
   if (model !== "None") {
     let response = await fetch("http://localhost:3000/api/select_model", { 
@@ -276,4 +287,18 @@ async function saveModel() {
       'Content-Type': 'application/json'
     } 
   });
+}
+
+async function predict() {
+  var stock = currentStock;
+  var response = await fetch("http://localhost:3000/api/predict", { 
+    method: "POST",
+    body: JSON.stringify({ stock }),
+    headers: {
+      'Content-Type': 'application/json'
+    } 
+  });
+  let res = await response.json();
+  console.log(res);
+  alert(`Next predicted close value for ${stock.toUpperCase()} is $${Math.round(res * 100) / 100}`);
 }

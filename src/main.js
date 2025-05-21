@@ -22,7 +22,8 @@ class StockPredictor extends EventEmitter {
   considered_intervals = 3;
   defaultTrainParameters = {
     epochs: 100,
-    batchSize: 32
+    batchSize: 32,
+    validationSplit: 0.2
   };
 
   constructor() {
@@ -57,8 +58,8 @@ class StockPredictor extends EventEmitter {
    * 
    * @param {*} data 
    */
-  async trainModel(data, parameters = this.defaultTrainParameters) {
-    let { epochs, batchSize } = parameters;
+  async trainModel(data, parameters = {}) {
+    let { epochs, batchSize, validationSplit } = { ...this.defaultTrainParameters, ...parameters };
     return new Promise((resolve, reject) => {
       try {
         this.model.fit(
@@ -68,7 +69,7 @@ class StockPredictor extends EventEmitter {
             epochs,
             batchSize,
             verbose: 0, // Suppress Logging
-            validationSplit: 0.2, //Validation results on 20% of data
+            validationSplit, //Validation results on 20% of data
             callbacks: [{
               onEpochEnd: (epoch, logs) => this.emit("epochEnd", epoch, logs),
               onTrainEnd: (logs) =>  this.emit("trainEnd", logs)
@@ -82,11 +83,11 @@ class StockPredictor extends EventEmitter {
     });
   }
 
-  async predict(data) {
+  async predict(inputs) {
     return new Promise(async (resolve, reject) => {
       try {
-        let r = await this.model.predict(data.data, data.labels, { verbose: 0 });
-        return resolve(r);
+        let r = await this.model.predict(inputs, { verbose: 0 });
+        return resolve(Array.from(r.dataSync()));
       } catch (e) {
         console.log(e);
         reject();
@@ -99,6 +100,10 @@ class StockPredictor extends EventEmitter {
     if (this.sample_data) return this.sample_data;
     this.sample_data = await this.dataManager.compileTrainingData(SAMPLE_DATA);
     return this.sample_data
+  }
+
+  async getPredictData(symbol) {
+    return await this.dataManager.getPredictData(`./data/${symbol.toLowerCase()}.json`);
   }
 
   async saveModel(name) {

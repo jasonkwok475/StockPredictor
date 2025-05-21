@@ -27,8 +27,13 @@ app.use(express.static(path.join(__dirname, 'webpage')));
 
 app.post('/api/data', async (req, res) => {
   const data = req.body;
-  let response = await apiManager.getTrainingData(data.stock, '2022-01-01');
-  res.status(200).json(response);
+  try {
+    let response = await apiManager.getTrainingData(data.stock, '2022-01-01');
+    res.status(200).json(response);
+  } catch (e) {
+    console.log(e);
+    res.status(200).json({ data: [], format:[]});
+  }
 });
 
 app.get('/api/models', (req, res) => {
@@ -40,7 +45,10 @@ app.get('/api/models', (req, res) => {
 
 app.post('/api/train', async (req, res) => {
   let params = req.body;
-  let result = await stockPredictor.trainModel(await stockPredictor.getSampleData(), params);
+  let data = await stockPredictor.getSampleData();
+  let result = await stockPredictor.trainModel(data, params);
+  // let r = await stockPredictor.predict(await stockPredictor.getTestData());
+  console.log(r);
   res.status(200).json(result);
 });
 
@@ -65,6 +73,10 @@ app.post('/api/select_model', async (req, res) => {
 });
 
 app.post('/api/predict', async (req, res) => {
+  let params = req.body;
+  let data = await stockPredictor.getPredictData(params.stock);
+  let result = await stockPredictor.predict(data);
+  res.status(200).json(result);
 });
 
 const main = async () => {

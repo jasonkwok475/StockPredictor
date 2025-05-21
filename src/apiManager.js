@@ -84,6 +84,8 @@ class ApiManager {
         sort: 'asc' 
       };
       let result = await this._request(`/v2/aggs/ticker/${symbol.toUpperCase()}/range/${this._interval.multiplier}/${this._interval.timespan}/${startdate}/${enddate}`, false, params);
+      if (result.resultsCount == 0) return []; // No data found
+      
       let data = await this._reformatData(result);
       let next_url = result.next_url;
 
@@ -127,8 +129,6 @@ class ApiManager {
           data: []
         }
         if (!err) return resolve(JSON.parse(data));
-
-        fs.writeFile(filePath, JSON.stringify(symbolData, null, 2), (err) => { if (err) console.log(err); }); //Create the file if it doesn't exist
         
         Promise.all([
           this.getStockData(symbol, startdate, this.getCurrentDate()),
@@ -136,6 +136,9 @@ class ApiManager {
           //this.getIndicator(symbol, startdate, "SMA")
         ]).then((values) => {
           let tempData = values[0];
+          if (!tempData || tempData?.length == 0) return reject("No data found");
+          fs.writeFile(filePath, JSON.stringify(symbolData, null, 2), (err) => { if (err) console.log(err); }); //Create the file if it doesn't exist
+
           let tempFormat = this._defaultFormatLong;
           tempFormat.push("rsi", "ema");
 
