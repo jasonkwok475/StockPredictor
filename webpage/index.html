@@ -9,6 +9,8 @@
   <link href="https://cdn.anychart.com/releases/8.11.0/css/anychart-ui.min.css" rel="stylesheet" type="text/css">
   <link href="https://cdn.anychart.com/releases/8.11.0/fonts/css/anychart-font.min.css" rel="stylesheet" type="text/css">
   <script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-core.min.js"></script>
+  <script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-bundle.min.js"></script>
+  <script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-base.min.js"></script>
   <script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-stock.min.js"></script>
   <script src="https://cdn.anychart.com/releases/8.11.0/themes/dark_glamour.min.js"></script>
   <script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-ui.min.js"></script>
@@ -22,20 +24,67 @@
     <form id="stockForm">
       <label for="stockSymbol">Stock Symbol:</label><br>
       <input type="text" id="stockSymbol" name="stockSymbol" placeholder="e.g., AAPL"><br><br>
-      <button type="button" onclick="loadChart()">Load Chart</button>
+      <button type="button" onclick="loadSymbolChart()" id="loadChart">Load Chart</button>
     </form>
     <div id="model-container">
+      <hr>
       <div>
         <label for="models">Model:</label>
         <select id="models" name="models" onchange="selectModel()">
           <option value="None" selected="selected">None</option>
           <option value="Train">Train New Model</option>
         </select><br><br>
+        <button type="button" onclick="predict()" id="predictButton">Predict Close Price</button>
       </div>
     </div>
   </div>
   <div id="stockChart"></div>
-  <div id="trainModel"></div>
+  <div id="trainModel">
+    <div id="parameters">
+      <div id="dataSelection">
+        <h2>Data Selection</h2>
+        <label for="trainData">Training Data:</label>
+        <input type="text" id="trainData" name="trainData" placeholder="e.g., 2020-01-01 to 2021-01-01"><br><br>
+        <label for="testData">Testing Data:</label>
+        <input type="text" id="testData" name="testData" placeholder="e.g., 2021-01-02 to 2021-12-31"><br><br>
+      </div>
+      <div id="parameterSelection">
+        <h2>Model Parameters</h2>
+        <label for="epochs">Epochs:</label>
+        <input type="number" id="epochs" name="epochs" value="10" min="1" step="1"><br><br>
+        <label for="batchSize">Batch Size:</label>
+        <input type="number" id="batchSize" name="batchSize" value="32" min="1" step="1"><br><br>
+        <table style="width:100%;">
+          <tr>
+            <td style="width:20%">
+              <button type="button" onclick="train()" id="trainButton">Train Model</button>
+            </td>
+            <td>
+              <div id="progressContainer">
+                <div id="progressBar" style="width:25%">
+                  <p id="progressText">25%</p>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </table>
+        <table style="width:100%;" id="saveModelTable">
+          <tr>
+            <td style="width: 250px;">
+              <input type="text" id="modelName" name="modelName" placeholder="Enter model name here..." style="width: 250px;">
+            </td>
+            <td>
+              <button type="button" onclick="saveModel()" id="saveButton">Save Current Model</button>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+    <div id="trainCharts">
+      <div id="lossChart"></div>
+      <div id="maeChart"></div>
+    </div>
+  </div>
   <script src="./index.js"></script>
 </body>
 </html>

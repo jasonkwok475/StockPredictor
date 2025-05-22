@@ -1,10 +1,12 @@
 const express = require('express');
+const enableWs = require('express-ws');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 
 const app = express();
 const port = 3000;
+enableWs(app);
 
 const MODEL_FOLDER = './model'; //! Put these into a config file?
 
@@ -21,13 +23,17 @@ app.use(cors({
 }));
 
 app.use(express.json());
-
 app.use(express.static(path.join(__dirname, 'webpage')));
 
 app.post('/api/data', async (req, res) => {
   const data = req.body;
-  let response = await apiManager.getTrainingData(data.stock, '2022-01-01');
-  res.status(200).json(response);
+  try {
+    let response = await apiManager.getTrainingData(data.stock, '2022-01-01');
+    res.status(200).json(response);
+  } catch (e) {
+    console.log(e);
+    res.status(200).json({ data: [], format:[]});
+  }
 });
 
 app.get('/api/models', (req, res) => {
@@ -37,29 +43,48 @@ app.get('/api/models', (req, res) => {
   });
 });
 
-app.post('/api/select_model', (req, res) => {
-  const model_file = req.body.model;
+app.post('/api/train', async (req, res) => {
+  let params = req.body;
+  let data = await stockPredictor.getSampleData();
+  let result = await stockPredictor.trainModel(data, params);
+  // let r = await stockPredictor.predict(await stockPredictor.getTestData());
+  console.log(r);
+  res.status(200).json(result);
 });
 
-app.post('/api/predict', (req, res) => {
-  const data = req.data;
+// Websocket for progress updates
+app.ws('/progress', (ws, req) => {
+  stockPredictor.on('epochEnd', (epoch, logs) => {
+    ws.send(JSON.stringify({ epoch: epoch + 1, loss: logs.loss, mae: logs.MAE }));
+  });
+
+  ws.on('close', () => console.log('WebSocket was closed'));
+});
+
+app.post('/api/save_model', async (req, res) => {
+  const model_name = req.body.model_name;
+  await stockPredictor.saveModel(model_name);
+  res.status(200).json({ message: 'Model saved successfully' }); 
+});
+
+app.post('/api/select_model', async (req, res) => {
+  const model_name = req.body.model_name;
+  await stockPredictor.loadModel(model_name);
+});
+
+app.post('/api/predict', async (req, res) => {
+  let params = req.body;
+  let data = await stockPredictor.getPredictData(params.stock);
+  let result = await stockPredictor.predict(data);
+  res.status(200).json(result);
 });
 
 const main = async () => {
   try {
     app.listen(port, async () => {
       console.log(`Server is running at http://localhost:${port}`);
-      let result = await stockPredictor.trainModel(await stockPredictor.getSampleData());
-      console.log(result);
-      let r = await stockPredictor.predict(await stockPredictor.getSampleData());
-      console.log(r);
     });
-  } catch (error) {
-    console.error('Error starting server:', error);
-  }
+  } catch (error) { console.error('Error starting server:', error); }
 }
 
 main().catch((error) => console.error('Error in main function:', error));
-
-//https://medium.com/coinmonks/free-stock-apis-de8f13619911
-//https://documentation.tradier.com/brokerage-api?_gl=1*eyez7q*_gcl_au*MTc5MTQ5NjU3MC4xNzQ2MjI1NzUx*_ga*MjEyNzQ5MjgwMi4xNzQ2MjI1NzUx*_ga_3PK48K3W99*MTc0NjIyNTc1MS4xLjEuMTc0NjIyNTc4NS4yNi4wLjA.

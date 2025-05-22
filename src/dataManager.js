@@ -12,13 +12,16 @@ const MODEL_FOLDER = "./model/";
  * @prop {float} low
  * @prop {float} close
  * @prop {float} vol
+ * @prop {float} rsi
+ * @prop {float} sma
  */
 
 class DataManager {
 
   considered_intervals = 3;
 
-  constructor() {
+  constructor(interval = this.considered_intervals) {
+    this.considered_intervals = interval;
     this.checkFolders();
   }
 
@@ -44,7 +47,7 @@ class DataManager {
         let format = filedata.format;
   
         let result = filedata.data.map((row) => {
-          if (row.includes(undefined) || row.includes('')) return;
+          if (row.includes(undefined) || row.includes('') || row.includes(NaN)) return;
           return {
             date: new Date(row[format.findIndex(x => x == "time")]),
             open: parseFloat(row[format.findIndex(x => x == "open")]),
@@ -53,7 +56,7 @@ class DataManager {
             close: parseFloat(row[format.findIndex(x => x == "close")]),
             vol: parseFloat(row[format.findIndex(x => x == "volume")]),
             rsi: parseFloat(row[format.findIndex(x => x == "rsi")]),
-            sma: parseFloat(row[format.findIndex(x => x == "sma")])
+            ema: parseFloat(row[format.findIndex(x => x == "ema")])
           }
         });
         return resolve(result.filter(item => item)); // Removes undefined elements
@@ -81,12 +84,33 @@ class DataManager {
           data[i + j].close,
           data[i + j].vol,
           data[i + j].rsi,
-          data[i + j].sma
+          data[i + j].ema
         )
       }
       training_labels.push(data[i + this.considered_intervals].close);
     }
     return {data: tf.tensor(training_data), labels: tf.tensor(training_labels)};
+  }
+
+  async getPredictData(path) {
+    let data = await this.extractData(path);
+    let training_data = [];
+
+    for (let i = 0; i < 1; i++) {
+      training_data[i] = [];
+      for (let j = 0; j < this.considered_intervals; j++) {
+        training_data[i].push(
+          data[i + j].open,
+          data[i + j].high,
+          data[i + j].low,
+          data[i + j].close,
+          data[i + j].vol,
+          data[i + j].rsi,
+          data[i + j].ema
+        )
+      }
+    }
+    return tf.tensor(training_data);
   }
 }
 
