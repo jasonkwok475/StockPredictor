@@ -67,29 +67,42 @@ class DataManager {
 
   /**
    * 
-   * @param {string} path 
+   * @param {string[]} path 
    */
   async compileTrainingData(path) {
-    let data = await this.extractData(path);
-    let training_data = [];
-    let training_labels = [];
+    return new Promise(async (resolve, reject) => {
+      let totalData = [], totalLabels = [];
 
-    for (let i = 0; i < data.length - this.considered_intervals; i++) {
-      training_data[i] = [];
-      for (let j = 0; j < this.considered_intervals; j++) {
-        training_data[i].push(
-          data[i + j].open,
-          data[i + j].high,
-          data[i + j].low,
-          data[i + j].close,
-          data[i + j].vol,
-          data[i + j].rsi,
-          data[i + j].ema
-        )
+      for (let k = 0; k < path.length; k++) {
+        let data = await this.extractData(path[k]);
+        let training_data = [];
+        let training_labels = [];
+
+        for (let i = 0; i < data.length - this.considered_intervals; i++) {
+          training_data[i] = [];
+          for (let j = 0; j < this.considered_intervals; j++) {
+            training_data[i].push(
+              data[i + j].open,
+              data[i + j].high,
+              data[i + j].low,
+              data[i + j].close,
+              data[i + j].vol,
+              data[i + j].rsi,
+              data[i + j].ema
+            )
+          }
+          let next = data[i + this.considered_intervals];
+          training_labels.push([ next.open, next.high, next.low, next.close ]);
+        }
+
+        totalData.push(...training_data);
+        totalLabels.push(...training_labels);
       }
-      training_labels.push(data[i + this.considered_intervals].close);
-    }
-    return {data: tf.tensor(training_data), labels: tf.tensor(training_labels)};
+
+      console.log(totalData);
+      console.log(totalLabels);
+      return resolve({data: tf.tensor(totalData), labels: tf.tensor(totalLabels)});
+    });
   }
 
   async getPredictData(path) {

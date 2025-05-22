@@ -42,7 +42,7 @@ class StockPredictor extends EventEmitter {
       tf.layers.dense({ units: 64, activation: "relu" }),
       tf.layers.dropout({ rate: 0.1 }),
       tf.layers.dense({ units: 64, activation: "relu" }),
-      tf.layers.dense({ units: 1 })
+      tf.layers.dense({ units: 4 })
     ]});
 
     model.compile({
@@ -98,7 +98,7 @@ class StockPredictor extends EventEmitter {
   //TODO Remove this, its just for testing purposes
   async getSampleData() {
     if (this.sample_data) return this.sample_data;
-    this.sample_data = await this.dataManager.compileTrainingData(SAMPLE_DATA);
+    this.sample_data = await this.dataManager.compileTrainingData([SAMPLE_DATA]);
     return this.sample_data
   }
 

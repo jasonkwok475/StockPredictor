@@ -1,9 +1,11 @@
 var default_stock = "VOO";
-var models, chart, lossChart, maeChart;
+var models, chart, trainChart;
 var epoch = 0;
 var dataLoss = anychart.data.set([]);
 var dataMAE = anychart.data.set([]);
+var predictData = anychart.data.table();
 var currentStock = default_stock;
+var maxLoss = "", maxMAE = "";
 
 // https://stackoverflow.com/questions/22429744/how-to-setup-route-for-websocket-server-in-express
 const socketProtocol = (window.location.protocol === 'https:' ? 'wss:' : 'ws:')
@@ -115,6 +117,17 @@ async function loadStockChart(stock) {
   series.risingFill("#43FF43");
   series.risingStroke("#43FF43");
 
+  var predictMapping = predictData.mapAs({
+    open: 1,
+    high: 2,
+    low: 3,
+    close: 4,
+    value: 4
+  });
+  var predictSeries = mainPlot.candlestick(predictMapping);
+  predictSeries.tooltip().enabled(false);
+  predictSeries.legendItem(false);
+
   //TODO Add this later
   // chart.tooltip().titleFormat(function() {
   //   return anychart.format.dateTime(this.clientX, "HH:mm dd MMMM yyyy");
@@ -167,6 +180,12 @@ async function loadStockChart(stock) {
     return anychart.format.dateTime(this.value, "HH:mm dd MMMM yyyy");
   });
 
+  var rangePicker = anychart.ui.rangePicker();
+  rangePicker.render(chart);
+
+  var rangeSelector = anychart.ui.rangeSelector();
+  rangeSelector.render(chart);
+
   //chart.selectRange('2020-01-01', '2022-12-31');
   chart.title(`${stock.toUpperCase()} Stock Chart`);
   chart.container('stockChart');
@@ -179,8 +198,7 @@ async function selectModel() {
   var model = $('#models').val();
   if (model == "Train") {
 
-    lossChart.dispose(); 
-    maeChart.dispose();
+    trainChart.dispose(); 
     epochs = 0;
     dataLoss = anychart.data.set([]);
     dataMAE = anychart.data.set([]);
@@ -210,27 +228,24 @@ async function selectModel() {
 } 
 
 function loadTrainCharts() {
-  //TODO Look into normalizing these values and plotting them on the same chart
-  //TODO Add accuracy here too?
-  lossChart = anychart.line(dataLoss);
-  lossChart.xScale(anychart.scales.log());
-  lossChart.xScale().minimum(1);
-  lossChart.xScale().maximum(dataLoss.length);
-  lossChart.xAxis().title("Epochs");
-  lossChart.yScale(anychart.scales.log());
-  lossChart.title(`Model Loss`);
-  lossChart.container('lossChart');
-  lossChart.draw();
-  
-  maeChart = anychart.line(dataMAE);
-  maeChart.xScale(anychart.scales.log());
-  maeChart.xScale().minimum(1);
-  maeChart.xScale().maximum(dataMAE.length);
-  maeChart.xAxis().title("Epochs");
-  maeChart.yScale(anychart.scales.log());
-  maeChart.title(`Model MAE`);
-  maeChart.container('maeChart');
-  maeChart.draw();
+  trainChart = anychart.line();
+
+  lossLine = trainChart.line(dataLoss);
+  lossLine.name("Loss");
+
+  maeLine = trainChart.line(dataMAE);
+  maeLine.name("MAE");
+
+  trainChart.xScale(anychart.scales.log());
+  trainChart.xScale().minimum(1);
+  trainChart.xScale().maximum(dataLoss.length);
+  trainChart.xAxis().title("Epochs");
+  trainChart.yScale(anychart.scales.log());
+  trainChart.title(`Model Output`);
+  trainChart.container('lossChart');
+  trainChart.legend().enabled(true);
+
+  trainChart.draw();
 }
 
 async function train() {
@@ -255,12 +270,13 @@ async function train() {
 
   socket.onmessage = e => {
     var d = JSON.parse(e.data);
-
-    //! Fix this, dataLoss is not an array, its a chart object
     epoch += 1;
+
+    if (maxLoss == "") maxLoss = d.loss;
+    if (maxMAE == "") maxMAE = d.mae;
     
-    dataLoss.append({ x: epoch, value: d.loss });
-    dataMAE.append({ x: epoch, value: d.mae });
+    dataLoss.append({ x: epoch, value: d.loss / maxLoss });
+    dataMAE.append({ x: epoch, value: d.mae / maxMAE });
     $("#progressBar").css("width", d.epoch / totalEpochs * 100 + "%");
     $("#progressText").text(Math.round(d.epoch / totalEpochs * 10000) / 100 + "%");
 
@@ -299,6 +315,6 @@ async function predict() {
     } 
   });
   let res = await response.json();
-  console.log(res);
+  predictData.addData([[Date.now(), ...res]]);
   alert(`Next predicted close value for ${stock.toUpperCase()} is $${Math.round(res * 100) / 100}`);
 }
