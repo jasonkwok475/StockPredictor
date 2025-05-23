@@ -95,6 +95,7 @@ async function loadStockChart(stock) {
   }
 
   let { dataTable, candlestickMapping, volumeMapping } = chartMapping({ data, format });
+  predictData = anychart.data.table();
   currentStock = stock;
 
   chart?.dispose();
@@ -191,6 +192,7 @@ async function loadStockChart(stock) {
   chart.container('stockChart');
   chart.draw();
 
+  $("#predictButton").prop('disabled', false); 
   $("#loadChart").prop('disabled', false);
 }
 
@@ -291,10 +293,7 @@ async function train() {
 }
 
 async function saveModel() {
-  //TODO Add model to dropdown list after creation
-  //TODO Actually add an input for model name nd see if it exists
   var modelName = $("#modelName").val();
-  console.log(modelName);
   if (modelName == "") return;
   await fetch("http://localhost:3000/api/save_model", { 
     method: "POST",
@@ -303,6 +302,13 @@ async function saveModel() {
       'Content-Type': 'application/json'
     } 
   });
+
+  var item = '<option value="'+modelName+'">'+modelName+'</option>';
+  $('#models').append(item);
+  alert(`Successfully saved model as ${modelName}`);
+
+  $('#models').val(modelName);
+  selectModel();
 }
 
 async function predict() {
@@ -315,6 +321,9 @@ async function predict() {
     } 
   });
   let res = await response.json();
-  predictData.addData([[Date.now(), ...res]]);
-  alert(`Next predicted close value for ${stock.toUpperCase()} is $${Math.round(res * 100) / 100}`);
+  for (let i = 0; i < res.length; i++) {
+    predictData.addData([[Date.now(), ...res[i].slice(0,4)]]);
+  }
+  alert("The predicted stock values have been added to the chart.");
+  $("#predictButton").prop('disabled', true); 
 }

@@ -2,8 +2,10 @@ const { EventEmitter } = require("stream");
 const tf = require("@tensorflow/tfjs");
 require('@tensorflow/tfjs-node');
 const DataManager = require('./dataManager.js');
+const fs = require('fs');
 
 const SAMPLE_DATA = './data/voo.json';
+const DATA_FOLDER = './data'; //! Put these into a config file?
 
 /**
  * @typedef {Object} InputObject
@@ -26,9 +28,10 @@ class StockPredictor extends EventEmitter {
     validationSplit: 0.2
   };
 
-  constructor() {
+  constructor(apiManager) {
     super();
     this.dataManager = new DataManager(this.considered_intervals);
+    this.apiManager = apiManager;
     this.sample_data = null;
 
     this.model = this.buildModel();
@@ -83,11 +86,25 @@ class StockPredictor extends EventEmitter {
     });
   }
 
-  async predict(inputs) {
+  async predict(symbol) {
     return new Promise(async (resolve, reject) => {
       try {
-        let r = await this.model.predict(inputs, { verbose: 0 });
-        return resolve(Array.from(r.dataSync()));
+        let results = [], previous = [];
+
+        for (let i = 0; i < 5; i++) { //TODO Change this, currently a defualt 5 predictions
+          let data = await this.getPredictData(symbol, previous);
+          let r = await this.model.predict(tf.tensor(data.data), { verbose: 0 });
+          let d = Array.from(r.dataSync());
+
+          results.push(d);
+
+          if (previous.length > 0) {
+            previous[previous.length - 1].push(data.vol, data.rsi, data.ema)
+          }
+          previous.push(d);
+        }
+
+        return resolve(results);
       } catch (e) {
         console.log(e);
         reject();
@@ -95,15 +112,27 @@ class StockPredictor extends EventEmitter {
     });
   }
 
-  //TODO Remove this, its just for testing purposes
-  async getSampleData() {
-    if (this.sample_data) return this.sample_data;
-    this.sample_data = await this.dataManager.compileTrainingData([SAMPLE_DATA]);
-    return this.sample_data
+  async getTrainingData() {
+    return new Promise(async (resolve, reject) => {
+      fs.readdir(DATA_FOLDER, async (err, x) => {
+        if (err) return console.log(err);
+        let files = x.map((y) => `./data/${y.toLowerCase()}`);
+
+        let data = await this.dataManager.compileTrainingData(files);
+        return resolve(data);
+      });
+    })
   }
 
-  async getPredictData(symbol) {
-    return await this.dataManager.getPredictData(`./data/${symbol.toLowerCase()}.json`);
+  //TODO Remove this, its just for testing purposes
+  // async getSampleData() {
+  //   if (this.sample_data) return this.sample_data;
+  //   this.sample_data = await this.dataManager.compileTrainingData([SAMPLE_DATA]);
+  //   return this.sample_data
+  // }
+
+  async getPredictData(symbol, predicted) {
+    return await this.dataManager.getPredictData(this.apiManager, `./data/${symbol.toLowerCase()}.json`, predicted);
   }
 
   async saveModel(name) {

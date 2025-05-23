@@ -10,11 +10,11 @@ enableWs(app);
 
 const MODEL_FOLDER = './model'; //! Put these into a config file?
 
-const StockPredictor = require('./src/main.js');
-const stockPredictor = new StockPredictor();
-
 const ApiManager = require('./src/apiManager.js');
 const apiManager = new ApiManager();
+
+const StockPredictor = require('./src/main.js');
+const stockPredictor = new StockPredictor(apiManager);
 
 app.use(cors({
   origin: 'http://localhost:3000',
@@ -45,7 +45,7 @@ app.get('/api/models', (req, res) => {
 
 app.post('/api/train', async (req, res) => {
   let params = req.body;
-  let data = await stockPredictor.getSampleData();
+  let data = await stockPredictor.getTrainingData();
   let result = await stockPredictor.trainModel(data, params);
   // let r = await stockPredictor.predict(await stockPredictor.getTestData());
   res.status(200).json(result);
@@ -73,8 +73,7 @@ app.post('/api/select_model', async (req, res) => {
 
 app.post('/api/predict', async (req, res) => {
   let params = req.body;
-  let data = await stockPredictor.getPredictData(params.stock);
-  let result = await stockPredictor.predict(data);
+  let result = await stockPredictor.predict(params.stock);
   res.status(200).json(result);
 });
 
