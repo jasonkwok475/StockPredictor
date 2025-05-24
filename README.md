@@ -7,13 +7,20 @@
 
 DNN linear regression model using tensorflow.js to predict short term stock behaviour
 
+- [Installation](#installation)
+- [Common Errors](#common-errors-and-fixes)
+
+<br>
+
 ## Dependencies
 - [Node.js >= 22](https://nodejs.org/en/download)
+<br>
 
 ## Features
 - Stock visualization with indicators (RSI, EMA)
 - Customizable DNN model training for stock prediction
 - Existing DNN models that can be imported and used
+<br>
 
 ## Installation
 
@@ -43,6 +50,7 @@ node .
 The webpage can now be accessed at `localhost:3000`.
 <br><br>
 
+<br>
 
 ## Common Errors and Fixes
 
@@ -60,10 +68,6 @@ Copy the file `tensorflow.dll` from `\node_modules\@tensorflow\tfjs-node\deps\li
 
 <br><br>
 
-## Roadmap
-- [ ] Add model training and saving to front-end UI
-- [ ] Add graphs for visualizing accuracy and learning
-- [ ] Add model prediction to stock chart
 
 
 [contributors-shield]: https://img.shields.io/github/contributors/jasonkwok475/StockPredictor.svg?style=for-the-badge
